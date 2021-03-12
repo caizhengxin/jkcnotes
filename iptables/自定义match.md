@@ -49,7 +49,7 @@ struct xt_protection_info {
  * @Author: jankincai
  * @Date:   2021-03-09 17:31:31
  * @Last Modified by:   jankincai
- * @Last Modified time: 2021-03-12 00:19:00
+ * @Last Modified time: 2021-03-12 10:15:45
  */
 #include <linux/module.h>
 #include <linux/skbuff.h>
@@ -496,7 +496,10 @@ uninstall:
 > 使用
 
 ```bash
-sudo iptables -m protection --protection-type land -j DROP
-sudo iptables -m protection --protection-type icmp_big --protection-length 4000: -j DROP
-sudo iptables -m protection --protection-type tcp_scan -j DROP
+sudo iptables -A INPUT -p tcp --syn -m protection --protection-type land -j DROP
+
+sudo iptables -A INPUT -p icmp -m protection --protection-type icmp_big --protection-length 4000: -j DROP
+
+sudo iptables -A INPUT -p tcp -m limit --limit 1000/sec --limit-burst 1000 -m protection --protection-type tcp_scan -j RETURN
+sudo iptables -A INPUT -p tcp -m protection --protection-type tcp_scan -j DROP
 ```
