@@ -49,7 +49,7 @@ struct xt_protection_info {
  * @Author: jankincai
  * @Date:   2021-03-09 17:31:31
  * @Last Modified by:   jankincai
- * @Last Modified time: 2021-03-12 10:15:45
+ * @Last Modified time: 2021-03-12 14:12:18
  */
 #include <linux/module.h>
 #include <linux/skbuff.h>
@@ -86,6 +86,12 @@ typedef struct tcpflags
 
 static tcpflags_t tcpflagslist[] = {
     { TCP_FLAGS_ALL                  ,  TCP_FLAGS_SYN                                                                 },
+    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_FIN | TCP_FLAGS_PSH | TCP_FLAGS_URG                                 },
+    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_SYN | TCP_FLAGS_FIN | TCP_FLAGS_PSH | TCP_FLAGS_URG                 },
+    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_SYN | TCP_FLAGS_RST | TCP_FLAGS_ACK | TCP_FLAGS_FIN | TCP_FLAGS_URG },
+    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_ALL                                                                 },
+    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_NONE                                                                },
+
     { TCP_FLAGS_FIN | TCP_FLAGS_SYN  ,  TCP_FLAGS_FIN | TCP_FLAGS_SYN                                                 },
     { TCP_FLAGS_SYN | TCP_FLAGS_RST  ,  TCP_FLAGS_SYN | TCP_FLAGS_RST                                                 },
     { TCP_FLAGS_FIN | TCP_FLAGS_RST  ,  TCP_FLAGS_FIN | TCP_FLAGS_RST                                                 },
@@ -93,11 +99,6 @@ static tcpflags_t tcpflagslist[] = {
     { TCP_FLAGS_ACK | TCP_FLAGS_URG  ,  TCP_FLAGS_URG                                                                 },
     { TCP_FLAGS_ACK | TCP_FLAGS_FIN  ,  TCP_FLAGS_FIN                                                                 },
     { TCP_FLAGS_ACK | TCP_FLAGS_PSH  ,  TCP_FLAGS_PSH                                                                 },
-    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_ALL                                                                 },
-    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_NONE                                                                },
-    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_FIN | TCP_FLAGS_PSH | TCP_FLAGS_URG                                 },
-    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_SYN | TCP_FLAGS_FIN | TCP_FLAGS_PSH | TCP_FLAGS_URG                 },
-    { TCP_FLAGS_ALL                  ,  TCP_FLAGS_SYN | TCP_FLAGS_RST | TCP_FLAGS_ACK | TCP_FLAGS_FIN | TCP_FLAGS_URG },
 
     { 0, 0 },
 };
@@ -496,10 +497,10 @@ uninstall:
 > 使用
 
 ```bash
-sudo iptables -A INPUT -p tcp --syn -m protection --protection-type land -j DROP
+sudo iptables -t raw -A PREROUTING -p tcp --syn -m protection --protection-type land -j DROP
 
-sudo iptables -A INPUT -p icmp -m protection --protection-type icmp_big --protection-length 4000: -j DROP
+sudo iptables -t raw -A PREROUTING -p ICMP --icmp-type echo-request -m protection --protection-type icmp_big --protection-length 4000: -j DROP
 
-sudo iptables -A INPUT -p tcp -m limit --limit 1000/sec --limit-burst 1000 -m protection --protection-type tcp_scan -j RETURN
-sudo iptables -A INPUT -p tcp -m protection --protection-type tcp_scan -j DROP
+sudo iptables -t raw -A PREROUTING -p tcp -m limit --limit 1000/sec --limit-burst 1000 -m protection --protection-type tcp_scan -j RETURN
+sudo iptables -t raw -A PREROUTING -p tcp -m protection --protection-type tcp_scan -j DROP
 ```
